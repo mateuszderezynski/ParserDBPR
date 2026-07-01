@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: parserdbpr
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health

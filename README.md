@@ -74,6 +74,17 @@ docker build -t dbpr-gear-tool .
 docker run --rm -p 8000:8000 dbpr-gear-tool
 ```
 
+## Deploy na Render
+
+Repo zawiera `render.yaml`, więc najprościej uruchomić aplikację jako Render Blueprint:
+
+```text
+https://render.com/deploy?repo=https://github.com/mateuszderezynski/ParserDBPR
+```
+
+Po zalogowaniu wybierz repo `ParserDBPR`, plan `Free` i kliknij deploy.
+Render zbuduje obraz z `Dockerfile` i wystawi publiczny adres aplikacji.
+
 ## Testy
 
 ```bash
