@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DBPR Gear Tool</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">DBPR Gear Tool</p>
+          <h1>Lista sprzętu z DBPR</h1>
+        </div>
+        <span class="mark">d&amp;b</span>
+      </header>
+
+      <section class="upload" id="dropZone">
+        <input id="fileInput" type="file" accept=".dbpr" />
+        <button id="pickButton" type="button">Wybierz .dbpr</button>
+        <div class="file">
+          <span>Plik</span>
+          <strong id="fileName">Brak pliku</strong>
+        </div>
+        <button id="parseButton" type="button" disabled>Parsuj</button>
+      </section>
+
+      <p class="error" id="error" hidden></p>
+
+      <section class="result" id="result" hidden>
+        <div class="result-head">
+          <div>
+            <p class="eyebrow">Projekt</p>
+            <h2 id="projectName"></h2>
+          </div>
+          <button id="downloadButton" type="button">Pobierz TXT</button>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Sprzęt</h3>
+              <span id="gearCount">0 szt.</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Ilość</th>
+                </tr>
+              </thead>
+              <tbody id="gearRows"></tbody>
+            </table>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Końcówki</h3>
+              <span id="ampCount">0 szt.</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Ilość</th>
+                  <th>ID w projekcie</th>
+                </tr>
+              </thead>
+              <tbody id="ampRows"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
