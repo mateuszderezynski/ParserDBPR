@@ -25,6 +25,18 @@ Otwórz:
 http://127.0.0.1:8000
 ```
 
+## Użycie bez weba
+
+```bash
+uv run dbpr-to-txt projekt.dbpr -o lista-sprzetu.txt
+```
+
+Bez `-o` wynik pojawi się w terminalu:
+
+```bash
+uv run dbpr-to-txt projekt.dbpr
+```
+
 ## API
 
 Podgląd JSON:

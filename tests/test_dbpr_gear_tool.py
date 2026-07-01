@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from app.cli import main as cli_main
 from app.dbpr_parser import DbprParseError, parse_dbpr
 from app.main import app
 from app.text_export import build_amp_summary, build_gear_summary, render_equipment_text
@@ -70,6 +71,27 @@ def test_api_parse_and_text_export(tmp_path):
     assert response.headers["content-type"].startswith("text/plain")
     assert "sample-lista-sprzetu.txt" in response.headers["content-disposition"]
     assert "- D80 x2 | ID: 0.21, 0.22\n" in response.text
+
+
+def test_cli_writes_text_file(tmp_path):
+    dbpr = make_sample_dbpr(tmp_path)
+    output = tmp_path / "exports" / "lista.txt"
+
+    exit_code = cli_main([str(dbpr), "-o", str(output)])
+
+    assert exit_code == 0
+    assert output.read_text(encoding="utf-8") == (
+        "LISTA SPRZĘTU DBPR\n"
+        "Projekt: sample\n"
+        "\n"
+        "SPRZĘT\n"
+        "- Rama 2 x1\n"
+        "- V12 x2\n"
+        "- V8 x4\n"
+        "\n"
+        "KOŃCÓWKI\n"
+        "- D80 x2 | ID: 0.21, 0.22\n"
+    )
 
 
 def test_rejects_non_dbpr(tmp_path):
