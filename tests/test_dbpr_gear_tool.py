@@ -1,3 +1,4 @@
+import base64
 import sqlite3
 from pathlib import Path
 
@@ -71,6 +72,46 @@ def test_api_parse_and_text_export(tmp_path):
     assert response.headers["content-type"].startswith("text/plain")
     assert "sample-lista-sprzetu.txt" in response.headers["content-disposition"]
     assert "- D80 x2 | ID: 0.21, 0.22\n" in response.text
+
+
+def test_gpt_action_export_returns_openai_file_response(tmp_path, monkeypatch):
+    dbpr = make_sample_dbpr(tmp_path)
+    client = TestClient(app)
+
+    def fake_download(download_link: str) -> bytes:
+        assert download_link == "https://files.oaiusercontent.com/sample"
+        return dbpr.read_bytes()
+
+    monkeypatch.setattr("app.main._download_action_file", fake_download)
+
+    response = client.post(
+        "/api/actions/equipment",
+        json={
+            "openaiFileIdRefs": [
+                {
+                    "name": "sample.dbpr",
+                    "id": "file-test",
+                    "mime_type": "application/octet-stream",
+                    "download_link": "https://files.oaiusercontent.com/sample",
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["project_name"] == "sample"
+    assert body["gear"] == [
+        {"model": "Rama 2", "quantity": 1},
+        {"model": "V12", "quantity": 2},
+        {"model": "V8", "quantity": 4},
+    ]
+
+    file_response = body["openaiFileResponse"][0]
+    assert file_response["name"] == "sample-lista-sprzetu.txt"
+    assert file_response["mime_type"] == "text/plain"
+    assert base64.b64decode(file_response["content"]).decode("utf-8") == body["text"]
+    assert "- D80 x2 | ID: 0.21, 0.22\n" in body["text"]
 
 
 def test_cli_writes_text_file(tmp_path):

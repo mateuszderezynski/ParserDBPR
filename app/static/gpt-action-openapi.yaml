@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: ParserDBPR GPT Action
+  version: 1.0.0
+  description: Convert d&b .dbpr project files into text equipment lists.
+servers:
+  - url: https://parserdbpr.onrender.com
+paths:
+  /api/actions/equipment:
+    post:
+      operationId: parseDbprEquipmentFromFile
+      summary: Convert a .dbpr file into an equipment list TXT file.
+      description: >
+        Use this action when the conversation contains one .dbpr file. Pass the
+        file through openaiFileIdRefs. The response includes a text preview,
+        structured gear and amplifier data, and an openaiFileResponse TXT file.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - openaiFileIdRefs
+              properties:
+                openaiFileIdRefs:
+                  type: array
+                  description: >
+                    References to exactly one .dbpr file. Although this schema
+                    uses strings, GPT Actions populates this field at runtime
+                    with objects containing name, id, mime_type, and
+                    download_link.
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Parsed equipment list and downloadable TXT file.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project_name:
+                    type: string
+                  text:
+                    type: string
+                    description: Plain text equipment list.
+                  gear:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                        quantity:
+                          type: integer
+                  amps:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                        quantity:
+                          type: integer
+                        ids:
+                          type: array
+                          items:
+                            type: string
+                  openaiFileResponse:
+                    type: array
+                    description: TXT file returned to the conversation.
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: The visible file name.
+                        mime_type:
+                          type: string
+                          description: The MIME type of the returned file.
+                        content:
+                          type: string
+                          format: byte
+                          description: Base64 encoded TXT file content.
+        "400":
+          description: Missing or invalid .dbpr file reference.
+        "422":
+          description: The file could not be parsed as a DBPR SQLite project.
+        "502":
+          description: The referenced file could not be downloaded.

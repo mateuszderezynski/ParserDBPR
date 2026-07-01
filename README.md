@@ -53,6 +53,23 @@ curl -F "file=@projekt.dbpr" \
   -o lista-sprzetu.txt
 ```
 
+## GPT Actions / agent
+
+Do agenta użyj specjalnego endpointu JSON:
+
+```text
+POST https://parserdbpr.onrender.com/api/actions/equipment
+```
+
+Gotowy schemat OpenAPI:
+
+```text
+https://parserdbpr.onrender.com/static/gpt-action-openapi.yaml
+```
+
+Ten endpoint przyjmuje `openaiFileIdRefs`, pobiera wskazany plik `.dbpr`,
+parsuje go i zwraca plik `.txt` przez `openaiFileResponse`.
+
 ## Format TXT
 
 ```text
