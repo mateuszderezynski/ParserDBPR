@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 from app.cli import main as cli_main
 from app.dbpr_parser import DbprParseError, parse_dbpr
 from app.main import app
-from app.text_export import build_amp_summary, build_gear_summary, render_equipment_text
+from app.text_export import (
+    build_amp_summary,
+    build_gear_groups,
+    build_gear_summary,
+    render_equipment_text,
+)
 
 
 def test_parse_and_summarize_dbpr(tmp_path):
@@ -16,9 +21,13 @@ def test_parse_and_summarize_dbpr(tmp_path):
 
     data = parse_dbpr(dbpr)
     gear = {row.model: row.quantity for row in build_gear_summary(data)}
+    groups = build_gear_groups(data)
     amps = {row.model: row for row in build_amp_summary(data)}
 
-    assert gear == {"Rama 2": 1, "V12": 2, "V8": 4}
+    assert gear == {"E12": 2, "Rama 2": 1, "V12": 2, "V8": 5}
+    assert [group.name for group in groups] == ["Main", "Front Fill"]
+    assert groups[0].quantity == 8
+    assert [(row.model, row.quantity) for row in groups[1].rows] == [("E12", 2)]
     assert amps["D80"].quantity == 2
     assert amps["D80"].ids == ("0.21", "0.22")
 
@@ -32,10 +41,20 @@ def test_render_text(tmp_path):
         "LISTA SPRZĘTU DBPR\n"
         "Projekt: sample\n"
         "\n"
-        "SPRZĘT\n"
+        "SPRZĘT WG GRUP\n"
+        "Main (8 szt.)\n"
         "- Rama 2 x1\n"
         "- V12 x2\n"
-        "- V8 x4\n"
+        "- V8 x5\n"
+        "\n"
+        "Front Fill (2 szt.)\n"
+        "- E12 x2\n"
+        "\n"
+        "PODSUMOWANIE MODELI\n"
+        "- E12 x2\n"
+        "- Rama 2 x1\n"
+        "- V12 x2\n"
+        "- V8 x5\n"
         "\n"
         "KOŃCÓWKI\n"
         "- D80 x2 | ID: 0.21, 0.22\n"
@@ -55,10 +74,27 @@ def test_api_parse_and_text_export(tmp_path):
     assert response.status_code == 200
     body = response.json()
     assert body["project_name"] == "sample"
+    assert body["gear_groups"] == [
+        {
+            "name": "Main",
+            "quantity": 8,
+            "rows": [
+                {"model": "Rama 2", "quantity": 1},
+                {"model": "V12", "quantity": 2},
+                {"model": "V8", "quantity": 5},
+            ],
+        },
+        {
+            "name": "Front Fill",
+            "quantity": 2,
+            "rows": [{"model": "E12", "quantity": 2}],
+        },
+    ]
     assert body["gear"] == [
+        {"model": "E12", "quantity": 2},
         {"model": "Rama 2", "quantity": 1},
         {"model": "V12", "quantity": 2},
-        {"model": "V8", "quantity": 4},
+        {"model": "V8", "quantity": 5},
     ]
     assert body["amps"] == [{"model": "D80", "quantity": 2, "ids": ["0.21", "0.22"]}]
 
@@ -101,10 +137,16 @@ def test_gpt_action_export_returns_openai_file_response(tmp_path, monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["project_name"] == "sample"
+    assert body["gear_groups"][1] == {
+        "name": "Front Fill",
+        "quantity": 2,
+        "rows": [{"model": "E12", "quantity": 2}],
+    }
     assert body["gear"] == [
+        {"model": "E12", "quantity": 2},
         {"model": "Rama 2", "quantity": 1},
         {"model": "V12", "quantity": 2},
-        {"model": "V8", "quantity": 4},
+        {"model": "V8", "quantity": 5},
     ]
 
     file_response = body["openaiFileResponse"][0]
@@ -125,10 +167,20 @@ def test_cli_writes_text_file(tmp_path):
         "LISTA SPRZĘTU DBPR\n"
         "Projekt: sample\n"
         "\n"
-        "SPRZĘT\n"
+        "SPRZĘT WG GRUP\n"
+        "Main (8 szt.)\n"
         "- Rama 2 x1\n"
         "- V12 x2\n"
-        "- V8 x4\n"
+        "- V8 x5\n"
+        "\n"
+        "Front Fill (2 szt.)\n"
+        "- E12 x2\n"
+        "\n"
+        "PODSUMOWANIE MODELI\n"
+        "- E12 x2\n"
+        "- Rama 2 x1\n"
+        "- V12 x2\n"
+        "- V8 x5\n"
         "\n"
         "KOŃCÓWKI\n"
         "- D80 x2 | ID: 0.21, 0.22\n"
@@ -193,6 +245,8 @@ def make_sample_dbpr(tmp_path: Path) -> Path:
             INSERT INTO ProjectInformation VALUES ('Untitled', 'tester', '3.12.0', '12.6.6');
             INSERT INTO SourceGroups VALUES (1, 'Main', 1);
             INSERT INTO SourceGroups VALUES (2, 'Unused channels', 99);
+            INSERT INTO SourceGroups VALUES (3, 'Front Fill', 2);
+            INSERT INTO SourceGroups VALUES (4, 'Main', 3);
 
             INSERT INTO Cabinets VALUES (1, 1, 10, 1);
             INSERT INTO Cabinets VALUES (2, 1, 10, 2);
@@ -201,6 +255,9 @@ def make_sample_dbpr(tmp_path: Path) -> Path:
             INSERT INTO Cabinets VALUES (5, 1, 10, 3);
             INSERT INTO Cabinets VALUES (6, 1, 11, 3);
             INSERT INTO Cabinets VALUES (7, 2, 11, 4);
+            INSERT INTO Cabinets VALUES (8, 3, 10, 4);
+            INSERT INTO Cabinets VALUES (9, 3, 10, 5);
+            INSERT INTO Cabinets VALUES (10, 4, 10, 6);
 
             INSERT INTO CabinetsAdditionalData VALUES (1, 'V8');
             INSERT INTO CabinetsAdditionalData VALUES (2, 'V8');
@@ -209,6 +266,9 @@ def make_sample_dbpr(tmp_path: Path) -> Path:
             INSERT INTO CabinetsAdditionalData VALUES (5, 'V12');
             INSERT INTO CabinetsAdditionalData VALUES (6, 'V12');
             INSERT INTO CabinetsAdditionalData VALUES (7, 'IGNORED');
+            INSERT INTO CabinetsAdditionalData VALUES (8, 'E12');
+            INSERT INTO CabinetsAdditionalData VALUES (9, 'E12');
+            INSERT INTO CabinetsAdditionalData VALUES (10, 'V8');
 
             INSERT INTO FlyingFrames VALUES (2, 1, 120.0, 60.0, 60.0);
 

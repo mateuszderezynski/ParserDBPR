@@ -162,6 +162,10 @@ button:disabled {
   padding: 16px;
 }
 
+.panel-wide {
+  grid-column: 1 / -1;
+}
+
 .panel-head {
   display: flex;
   align-items: center;
@@ -221,6 +225,73 @@ tbody tr:nth-child(even) td {
 
 .model {
   font-weight: 750;
+}
+
+.group-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.group-block {
+  border: 1px solid var(--line);
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  background: var(--black);
+  color: var(--white);
+  border-bottom: 2px solid var(--red);
+}
+
+.group-head h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.group-head span {
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.group-block ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.group-block li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.group-block li:last-child {
+  border-bottom: 0;
+}
+
+.group-block li:nth-child(even) {
+  background: var(--soft);
+}
+
+.group-block li span {
+  color: var(--red);
+  font-weight: 850;
+}
+
+.empty {
+  margin: 0;
+  color: var(--red);
+  font-weight: 800;
 }
 
 @media (max-width: 760px) {

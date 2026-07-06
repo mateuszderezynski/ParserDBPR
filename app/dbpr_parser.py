@@ -21,26 +21,31 @@ LIMIT 1;
 """
 
 _QUERY_GEAR = """
-SELECT sg.Name        AS group_name,
-       cad.Name       AS speaker_model,
-       COUNT(*)       AS qty
+SELECT sg.SourceGroupId AS group_id,
+       sg.Name          AS group_name,
+       sg.OrderIndex    AS group_order,
+       cad.Name         AS speaker_model,
+       COUNT(*)         AS qty
 FROM SourceGroups sg
 JOIN Cabinets cab               ON sg.SourceGroupId = cab.SourceGroupId
 JOIN CabinetsAdditionalData cad ON cab.CabinetId = cad.CabinetId
 WHERE sg.Name != ?
-GROUP BY sg.Name, cad.Name
+GROUP BY sg.SourceGroupId, sg.Name, sg.OrderIndex, cad.Name
 ORDER BY sg.OrderIndex, cad.Name;
 """
 
 _QUERY_FRAMES = """
-SELECT ff.Type                 AS frame_type,
-       sg.Name                 AS group_name,
+SELECT sg.SourceGroupId       AS group_id,
+       sg.Name                AS group_name,
+       sg.OrderIndex          AS group_order,
+       ff.Type                AS frame_type,
        ff.TotalWeight          AS total_weight,
        ff.FrontPickPointWeight AS front_pick_weight,
        ff.RearPickPointWeight  AS rear_pick_weight
 FROM FlyingFrames ff
 JOIN SourceGroups sg ON ff.SourceGroupId = sg.SourceGroupId
-ORDER BY sg.Name;
+WHERE sg.Name != ?
+ORDER BY sg.OrderIndex, ff.Type;
 """
 
 _QUERY_AMPS = """
@@ -61,15 +66,19 @@ class ProjectInfo:
 
 @dataclass(frozen=True)
 class GearItem:
+    group_id: int
     group_name: str
+    group_order: int
     speaker_model: str
     quantity: int
 
 
 @dataclass(frozen=True)
 class FrameItem:
-    frame_type: str | None
+    group_id: int
     group_name: str
+    group_order: int
+    frame_type: str | None
     total_weight: float | None
     front_pick_weight: float | None
     rear_pick_weight: float | None
@@ -126,7 +135,9 @@ def _extract(conn: sqlite3.Connection) -> DbprData:
 
     gear = [
         GearItem(
+            group_id=row["group_id"],
             group_name=row["group_name"],
+            group_order=row["group_order"],
             speaker_model=row["speaker_model"],
             quantity=row["qty"],
         )
@@ -135,13 +146,15 @@ def _extract(conn: sqlite3.Connection) -> DbprData:
 
     frames = [
         FrameItem(
-            frame_type=str(row["frame_type"]) if row["frame_type"] is not None else None,
+            group_id=row["group_id"],
             group_name=row["group_name"],
+            group_order=row["group_order"],
+            frame_type=str(row["frame_type"]) if row["frame_type"] is not None else None,
             total_weight=row["total_weight"],
             front_pick_weight=row["front_pick_weight"],
             rear_pick_weight=row["rear_pick_weight"],
         )
-        for row in conn.execute(_QUERY_FRAMES)
+        for row in conn.execute(_QUERY_FRAMES, (_UNUSED_GROUP,))
     ]
 
     amps = [

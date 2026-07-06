@@ -7,8 +7,10 @@ const fileName = document.querySelector("#fileName");
 const errorBox = document.querySelector("#error");
 const result = document.querySelector("#result");
 const projectName = document.querySelector("#projectName");
+const gearGroupRows = document.querySelector("#gearGroupRows");
 const gearRows = document.querySelector("#gearRows");
 const ampRows = document.querySelector("#ampRows");
+const groupCount = document.querySelector("#groupCount");
 const gearCount = document.querySelector("#gearCount");
 const ampCount = document.querySelector("#ampCount");
 
@@ -97,14 +99,55 @@ async function downloadTextFile() {
 
 function renderResult(data) {
   projectName.textContent = data.project_name;
+  renderGearGroups(data.gear_groups || []);
   renderTable(gearRows, data.gear, ["model", "quantity"]);
   renderTable(ampRows, data.amps, ["model", "quantity", "ids"]);
 
   const totalGear = data.gear.reduce((sum, row) => sum + row.quantity, 0);
   const totalAmps = data.amps.reduce((sum, row) => sum + row.quantity, 0);
+  groupCount.textContent = `${(data.gear_groups || []).length} grup`;
   gearCount.textContent = `${totalGear} szt.`;
   ampCount.textContent = `${totalAmps} szt.`;
   result.hidden = false;
+}
+
+function renderGearGroups(groups) {
+  gearGroupRows.replaceChildren();
+
+  if (!groups.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = "Brak sprzętu";
+    gearGroupRows.appendChild(empty);
+    return;
+  }
+
+  for (const group of groups) {
+    const block = document.createElement("section");
+    block.className = "group-block";
+
+    const header = document.createElement("div");
+    header.className = "group-head";
+
+    const title = document.createElement("h4");
+    title.textContent = group.name;
+
+    const count = document.createElement("span");
+    count.textContent = `${group.quantity} szt.`;
+
+    header.append(title, count);
+    block.appendChild(header);
+
+    const list = document.createElement("ul");
+    for (const row of group.rows) {
+      const item = document.createElement("li");
+      item.innerHTML = `<strong>${escapeHtml(row.model)}</strong><span>x${row.quantity}</span>`;
+      list.appendChild(item);
+    }
+
+    block.appendChild(list);
+    gearGroupRows.appendChild(block);
+  }
 }
 
 function renderTable(tbody, rows, columns) {
@@ -146,4 +189,17 @@ function hideError() {
 
 function baseName(name) {
   return name.replace(/\.[^.]+$/, "") || "dbpr";
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[char];
+  });
 }

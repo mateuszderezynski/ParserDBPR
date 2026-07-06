@@ -13,7 +13,8 @@ paths:
       description: >
         Use this action when the conversation contains one .dbpr file. Pass the
         file through openaiFileIdRefs. The response includes a text preview,
-        structured gear and amplifier data, and an openaiFileResponse TXT file.
+        gear grouped by DBPR source groups, amplifier data, and an
+        openaiFileResponse TXT file.
       requestBody:
         required: true
         content:
@@ -45,8 +46,28 @@ paths:
                   text:
                     type: string
                     description: Plain text equipment list.
+                  gear_groups:
+                    type: array
+                    description: Equipment grouped by the source groups/categories from the DBPR file.
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        quantity:
+                          type: integer
+                        rows:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              model:
+                                type: string
+                              quantity:
+                                type: integer
                   gear:
                     type: array
+                    description: Overall equipment model totals across the whole project.
                     items:
                       type: object
                       properties:

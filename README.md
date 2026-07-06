@@ -8,7 +8,8 @@ Bez Supabase, Google Drive, StageOS, Reacta i innych zależności projektu.
 ## Co robi
 
 - przyjmuje plik `.dbpr`,
-- pokazuje listę sprzętu: model + ilość,
+- pokazuje listę sprzętu według grup z projektu,
+- pokazuje ogólne podsumowanie modeli: model + ilość,
 - pokazuje końcówki: model + ilość + ID w projekcie,
 - generuje prosty plik `.txt`.
 
@@ -76,7 +77,16 @@ parsuje go i zwraca plik `.txt` przez `openaiFileResponse`.
 LISTA SPRZĘTU DBPR
 Projekt: sample
 
-SPRZĘT
+SPRZĘT WG GRUP
+Main Hang (16 szt.)
+- V8 x12
+- V12 x4
+
+Front Fill (2 szt.)
+- E12 x2
+
+PODSUMOWANIE MODELI
+- E12 x2
 - V8 x12
 - V12 x4
 

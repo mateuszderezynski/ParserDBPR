@@ -3,8 +3,8 @@
 import base64
 import tempfile
 from dataclasses import asdict
-from typing import Any
 from pathlib import Path
+from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlparse
 from urllib.request import Request, urlopen
@@ -15,7 +15,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app.dbpr_parser import DbprData, DbprParseError, parse_dbpr
-from app.text_export import build_amp_summary, build_gear_summary, render_equipment_text
+from app.text_export import (
+    build_amp_summary,
+    build_gear_groups,
+    build_gear_summary,
+    render_equipment_text,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -31,6 +36,7 @@ class ActionEquipmentRequest(BaseModel):
             "mime_type, and download_link."
         ),
     )
+
 
 app = FastAPI(
     title="DBPR Gear Tool",
@@ -57,6 +63,7 @@ async def parse_upload(file: UploadFile) -> dict:
     return {
         "project_name": project_name,
         "project_info": asdict(data.project_info),
+        "gear_groups": [asdict(group) for group in build_gear_groups(data)],
         "gear": [asdict(row) for row in build_gear_summary(data)],
         "amps": [asdict(row) for row in build_amp_summary(data)],
         "text": render_equipment_text(data, project_name),
@@ -86,6 +93,7 @@ def action_export_equipment(request: ActionEquipmentRequest) -> dict:
     return {
         "project_name": project_name,
         "project_info": asdict(data.project_info),
+        "gear_groups": [asdict(group) for group in build_gear_groups(data)],
         "gear": [asdict(row) for row in build_gear_summary(data)],
         "amps": [asdict(row) for row in build_amp_summary(data)],
         "text": text,
